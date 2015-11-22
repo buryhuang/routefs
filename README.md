@@ -20,16 +20,16 @@ typemap.default example:
 ```
 
 Cache Layer
-======
+-----
 Cache layer is experimental but works in a certain degree. It uses a desinated folder as "staging" or "cache" folder, then background post process copy-then-remove (move) the data to the next high laytency - but high capacity storage.
 
 Unlimited Use Cases By Design
-=====
+-----
 With this simple flexible design, this routefs make efficient use cases possible.
 For example, for personal backup devices, it's as simple as:
 local SSD -> local hard drive -> Amazon S3.
 With the routefs, we don't need to bother change the code. Simply use a different config file.
 
 VS Union-FS
-=====
+-----
 Union-FS is kernel FS which provides much better performance because of less context switch. Though, in current heteriougenous environment, network enabled storage hides the advantage of being a kernel FS. Union-FS has many limitation for being a kernel FS, while routefs provides much more flexibility and much easy to understand.
