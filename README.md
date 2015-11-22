@@ -8,12 +8,16 @@ The core design of routefs is to use a simple syntax to flexiblly configure wher
 
 This example demostrate the self-explained concept of how this file system works:
 The file format is:
+```
 <suffix>,<target folder>
+```
 
-typemap.default:
+typemap.default example:
+```
 .mhg,/routefs_data/L3store/deobj
 .bsf,/routefs_data/L2store/deblock
 *,/routefs_data/L1store/raw
+```
 
 Cache Layer
 ======
