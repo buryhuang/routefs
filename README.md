@@ -1,1 +1,1 @@
-routefs is a FUSE file system that routes files to 
+routefs is a FUSE file system that routes files to and from different locations. Routefs is similar to the idea of union-fs, but with a much more flexible design. It fits much better in caching and cloud solutions.
