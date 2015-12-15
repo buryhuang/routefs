@@ -15,7 +15,7 @@ enum LOG_LEVEL {
 	LOG_LEVEL_ERROR
 };
 
-#define DEF_LOG_LEVEL LOG_LEVEL_DEBUG
+#define DEF_LOG_LEVEL LOG_LEVEL_ERROR
 
 //  macro to log fields in structs.
 #define log_struct(st, field, format, typecast) \

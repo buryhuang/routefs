@@ -3,6 +3,9 @@
 #include <map>
 #include <sstream>
 #include <string>
+#include <stdlib.h>
+#include <string.h>
+#include <errno.h>
 
 #include "rootmap.h"
 #include "log.h"
@@ -17,6 +20,34 @@ string TYPEMAP_DB;
 TYPEVAL_T _typeval;
 TYPEMAP_T _rootmap;
 
+static int _mkdir(const char *dir) {
+	char tmp[256];
+	char *p = NULL;
+	size_t len;
+	int status = 0;
+
+	snprintf(tmp, sizeof(tmp),"%s",dir);
+	len = strlen(tmp);
+	if(tmp[len - 1] == '/') {
+		tmp[len - 1] = 0;
+	}
+	for(p = tmp + 1; *p; p++) {
+		if(*p == '/') {
+			*p = 0;
+			status = mkdir(tmp, S_IRWXU);
+			if (status != 0 && status != EEXIST) {
+				return status;
+			}
+			*p = '/';
+		}
+	}
+	status = mkdir(tmp, S_IRWXU);
+	if (status != 0 && status != EEXIST) {
+		return status;
+	}
+
+	return 0;
+}
 
 TYPE_T get_type(const char * hint)
 {
@@ -67,12 +98,22 @@ int rootmap_init_default(const char * default_root)
 
 int rootmap_init (const char * default_root)
 {
+	STORE_ROOT = default_root;
+
+	int mkdir_status = mkdir(default_root, S_IRWXU);
+	log_msg(LOG_LEVEL_ERROR, "rootmap_init creating %s\n", default_root);
+	if (mkdir_status != 0 && mkdir_status != EEXIST) {
+		char errstr[1024];
+		log_msg(LOG_LEVEL_ERROR, "rootmap_init failed to create %s, returned %s\n", default_root, strerror_r(mkdir_status, errstr, 1024));
+		return mkdir_status;
+	}
+
 	TYPEMAP_DB = STORE_ROOT + "/.type.map";
 
 	string temp_str;
 
 	ifstream file;
-	file.open(TYPEMAP_DB);
+	file.open(TYPEMAP_DB.c_str());
 	if(file.fail()) {
 		cout<<"Failed to open "<<TYPEMAP_DB<<endl;
 		cout<<"Using default map"<<endl;

@@ -23,7 +23,7 @@
 using namespace std;
 
 // Global variables
-string STORE_ROOT = "/";
+string STORE_ROOT = "/routefs_root";
 string STORE_DATA_STAGING_ROOT;
 
 // For writing

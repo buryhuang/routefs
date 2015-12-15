@@ -1212,37 +1212,8 @@ void *ifs_init(struct fuse_conn_info *conn)
 {
 	AutoTimer _timer(__FUNCTION__);
 
-
 	log_msg(LOG_LEVEL_DEBUG, "\nifs_init()\n");
-	
-	/*
-	 * Set current mount point info
-	 */
-	//ifs_setxattr("/", "fss_data_out", IFS_DATA->rootdir, PATH_MAX, 0);
-	
-	// Initialize the type map
-	rootmap_init(IFS_DATA->rootdir);
-	
-	// Save the type string to be visible for users
-	//string type_str = rootmap_gettype_str();
-	//ifs_setxattr("/", "fss_typeval", type_str.c_str(), PATH_MAX, 0);
 
-	// Save the map string to be visible for users
-	//string map_str = rootmap_getmap_str();
-	//ifs_setxattr("/", "fss_rootmap", map_str.c_str(), PATH_MAX, 0);
-	
-	// Initialize the obj map
-	objmap_init();
-	
-	// Initialize the post-processing db
-	postprocess_init();
-	
-	// Initialize the stats db
-	stats_init();
-
-	// Initialize the post-process queue thread
-	ppd_thread_start();
-	
 	return IFS_DATA;
 }
 
@@ -1558,54 +1529,118 @@ void ifs_usage()
     fprintf(stderr, "usage:  routefs [FUSE and mount options] rootDir mountPoint\n");
 }
 
+int rfs_init(const char * rootdir)
+{
+	AutoTimer _timer(__FUNCTION__);
+
+	int status = 0;
+
+	log_msg(LOG_LEVEL_DEBUG, "\nifs_init()\n");
+	
+	/*
+	 * Set current mount point info
+	 */
+	//ifs_setxattr("/", "fss_data_out", IFS_DATA->rootdir, PATH_MAX, 0);
+	
+
+	// Initialize the type map
+	status = rootmap_init(rootdir);
+	if (0 != status) {
+		log_msg(LOG_LEVEL_ERROR, "Failed to initialize rootmap\n");
+		return 1;
+	}
+
+	// Save the type string to be visible for users
+	//string type_str = rootmap_gettype_str();
+	//ifs_setxattr("/", "fss_typeval", type_str.c_str(), PATH_MAX, 0);
+
+	// Save the map string to be visible for users
+	//string map_str = rootmap_getmap_str();
+	//ifs_setxattr("/", "fss_rootmap", map_str.c_str(), PATH_MAX, 0);
+	
+	// Initialize the obj map
+	status = objmap_init();
+	if (0 != status) {
+		log_msg(LOG_LEVEL_ERROR, "Failed to initialize objmap\n");
+		return 1;
+	}
+	
+	// Initialize the post-processing db
+	status = postprocess_init();
+	if (0 != status) {
+		log_msg(LOG_LEVEL_ERROR, "Failed to initialize postprocess\n");
+		return 1;
+	}
+
+	// Initialize the stats db
+	status = stats_init();
+	if (0 != status) {
+		log_msg(LOG_LEVEL_ERROR, "Failed to initialize stats\n");
+		return 1;
+	}
+
+	// Initialize the post-process queue thread
+	ppd_thread_start();
+
+	return 0;
+}
+
 int main(int argc, char *argv[])
 {
-    int fuse_stat;
-    struct ifs_state *ifs_data;
+	int fuse_stat;
+	struct ifs_state *ifs_data;
 
-    // routefs doesn't do any access checking on its own (the comment
-    // blocks in fuse.h mention some of the functions that need
-    // accesses checked -- but note there are other functions, like
-    // chown(), that also need checking!).  Since running routefs as root
-    // will therefore open Metrodome-sized holes in the system
-    // security, we'll check if root is trying to mount the filesystem
-    // and refuse if it is.  The somewhat smaller hole of an ordinary
-    // user doing it with the allow_other flag is still there because
-    // I don't want to parse the options string.
-    //if ((getuid() == 0) || (geteuid() == 0)) {
+	// routefs doesn't do any access checking on its own (the comment
+	// blocks in fuse.h mention some of the functions that need
+	// accesses checked -- but note there are other functions, like
+	// chown(), that also need checking!).  Since running routefs as root
+	// will therefore open Metrodome-sized holes in the system
+	// security, we'll check if root is trying to mount the filesystem
+	// and refuse if it is.  The somewhat smaller hole of an ordinary
+	// user doing it with the allow_other flag is still there because
+	// I don't want to parse the options string.
+	//if ((getuid() == 0) || (geteuid() == 0)) {
 	//fprintf(stderr, "Running BBFS as root opens unnacceptable security holes\n");
 	//return 1;
-    //}
-    
-    // Perform some sanity checking on the command line:  make sure
-    // there are enough arguments, and that neither of the last two
-    // start with a hyphen (this will break if you actually have a
-    // rootpoint or mountpoint whose name starts with a hyphen, but so
-    // will a zillion other programs)
-    if ((argc < 3) || (argv[argc-2][0] == '-') || (argv[argc-1][0] == '-')) {
-	ifs_usage();
-	return 1;
-    }
+	//}
 
-    ifs_data = (struct ifs_state *)malloc(sizeof(struct ifs_state));
-    if (ifs_data == NULL) {
-	perror("main calloc");
-	abort();
-    }
+	// Perform some sanity checking on the command line:  make sure
+	// there are enough arguments, and that neither of the last two
+	// start with a hyphen (this will break if you actually have a
+	// rootpoint or mountpoint whose name starts with a hyphen, but so
+	// will a zillion other programs)
+	if ((argc < 3) || (argv[argc-2][0] == '-') || (argv[argc-1][0] == '-')) {
+		ifs_usage();
+		return 1;
+	}
 
-    // Pull the rootdir out of the argument list and save it in my
-    // internal data
-    snprintf(ifs_data->rootdir,  PATH_MAX, "%s", realpath(argv[argc-2], NULL));
-    argv[argc-2] = argv[argc-1];
-    argv[argc-1] = NULL;
-    argc--;
-    
-    ifs_data->logfile = log_open(LOG_FILENAME);
-    
-    // turn over control to fuse
-    fprintf(stderr, "about to call fuse_main\n");
-    fuse_stat = fuse_main(argc, argv, &ifs_oper, ifs_data);
-    fprintf(stderr, "fuse_main returned %d\n", fuse_stat);
-    
-    return fuse_stat;
+	ifs_data = (struct ifs_state *)malloc(sizeof(struct ifs_state));
+	if (ifs_data == NULL) {
+		perror("main calloc");
+		abort();
+	}
+
+	// Pull the rootdir out of the argument list and save it in my
+	// internal data
+	snprintf(ifs_data->rootdir,  PATH_MAX, "%s", argv[argc-2]);
+	argv[argc-2] = argv[argc-1];
+	argv[argc-1] = NULL;
+	argc--;
+
+	ifs_data->logfile = log_open(LOG_FILENAME);
+
+	// Initialize the type map
+	printf("Using rootdir %s\n", ifs_data->rootdir);
+	if (0!=rfs_init(ifs_data->rootdir)) {
+		printf("Failed to initialize routefs components, check routefs.log for details.\n");
+		log_msg(LOG_LEVEL_ERROR, "Failed to initialize routefs components\n");
+		return 1;
+	}
+
+	// turn over control to fuse
+	fprintf(stderr, "about to call fuse_main\n");
+	fuse_stat = fuse_main(argc, argv, &ifs_oper, ifs_data);
+	fprintf(stderr, "fuse_main returned %d\n", fuse_stat);
+
+	return fuse_stat;
 }

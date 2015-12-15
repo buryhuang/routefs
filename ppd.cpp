@@ -58,7 +58,7 @@ void process_postprocess_file(const string path, const PP_ENTRY_T * pp_entry)
 				#ifdef CACHE_MODE
 				objmap_set(path.c_str(), STORE_DATA_STAGING_TARGET.store_name.c_str(), 2); // Only add to L2, not deleting one
 				#else
-				objmap_set(path.c_str(), STORE_DATA_STAGING_TARGET.store_name);
+				objmap_set(path.c_str(), STORE_DATA_STAGING_TARGET.store_name.c_str());
 				#endif
 				log_msg(LOG_LEVEL_ERROR, "process_file:(path=\"%s\"), post-process successfully migrated from %s to %s\n",
 					path.c_str(),

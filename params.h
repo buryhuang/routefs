@@ -29,6 +29,6 @@ struct ifs_state {
 };
 #define IFS_DATA ((struct ifs_state *) fuse_get_context()->private_data)
 
-#define LOG_FILENAME "kiwifs.log"
+#define LOG_FILENAME "routefs.log"
 
 #endif
