@@ -96,17 +96,9 @@ int rootmap_init_default(const char * default_root)
 	return 0;
 }
 
-int rootmap_init (const char * default_root)
+int rootmap_init (const char * default_meta, const char * default_data)
 {
-	STORE_ROOT = default_root;
-
-	int mkdir_status = mkdir(default_root, S_IRWXU);
-	log_msg(LOG_LEVEL_ERROR, "rootmap_init creating %s\n", default_root);
-	if (mkdir_status != 0 && mkdir_status != EEXIST) {
-		char errstr[1024];
-		log_msg(LOG_LEVEL_ERROR, "rootmap_init failed to create %s, returned %s\n", default_root, strerror_r(mkdir_status, errstr, 1024));
-		return mkdir_status;
-	}
+	STORE_ROOT = default_meta;
 
 	TYPEMAP_DB = STORE_ROOT + "/.type.map";
 
@@ -118,7 +110,7 @@ int rootmap_init (const char * default_root)
 		cout<<"Failed to open "<<TYPEMAP_DB<<endl;
 		cout<<"Using default map"<<endl;
 		// Always get default first
-		rootmap_init_default(default_root);
+		rootmap_init_default(default_data);
 		return 0;
 	}
 	while (!file.eof())

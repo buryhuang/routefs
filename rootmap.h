@@ -17,7 +17,7 @@ typedef map<string, uint32_t> TYPEVAL_T;
 typedef map<TYPE_T, string>   TYPEMAP_T;
 
 extern const char * rootmap_getdest(const char * hint);
-extern int rootmap_init (const char * default_root);
+extern int rootmap_init (const char * default_meta, const char * default_data);
 extern const string rootmap_gettype_str();
 extern const string rootmap_getmap_str();
 

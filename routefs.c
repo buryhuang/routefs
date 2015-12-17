@@ -46,6 +46,8 @@
 #include <sys/xattr.h>
 #include <time.h>
 
+#include <vector>
+
 #ifdef DEBUG
 
 #define TIMER_START \
@@ -103,6 +105,7 @@ private:
 using namespace std;
 
 map<string, string> xattr_map;
+std::string default_datadir;
 
 // Report errors to logfile and give -errno to caller
 static int ifs_error(const char *str, int log=1)
@@ -1214,6 +1217,55 @@ void *ifs_init(struct fuse_conn_info *conn)
 
 	log_msg(LOG_LEVEL_DEBUG, "\nifs_init()\n");
 
+	int status = 0;
+
+	/*
+	 * Set current mount point info
+	 */
+	//ifs_setxattr("/", "fss_data_out", IFS_DATA->rootdir, PATH_MAX, 0);
+	
+
+	// Initialize the type map
+	status = rootmap_init(IFS_DATA->rootdir, default_datadir.c_str());
+	if (0 != status) {
+		log_msg(LOG_LEVEL_ERROR, "Failed to initialize rootmap\n");
+		return IFS_DATA;
+	}
+
+	// Save the type string to be visible for users
+	//string type_str = rootmap_gettype_str();
+	//ifs_setxattr("/", "fss_typeval", type_str.c_str(), PATH_MAX, 0);
+
+	// Save the map string to be visible for users
+	//string map_str = rootmap_getmap_str();
+	//ifs_setxattr("/", "fss_rootmap", map_str.c_str(), PATH_MAX, 0);
+	
+	// Initialize the obj map
+	status = objmap_init();
+	if (0 != status) {
+		log_msg(LOG_LEVEL_ERROR, "Failed to initialize objmap\n");
+		return IFS_DATA;
+	}
+	
+	// Initialize the post-processing db
+	status = postprocess_init();
+	if (0 != status) {
+		log_msg(LOG_LEVEL_ERROR, "Failed to initialize postprocess\n");
+		return IFS_DATA;
+	}
+
+	// Initialize the stats db
+	status = stats_init();
+	if (0 != status) {
+		log_msg(LOG_LEVEL_ERROR, "Failed to initialize stats\n");
+		return IFS_DATA;
+	}
+
+	// Initialize the post-process queue thread
+	ppd_thread_start();
+
+	snprintf(IFS_DATA->rootdir,  PATH_MAX, "%s", default_datadir.c_str());
+
 	return IFS_DATA;
 }
 
@@ -1533,54 +1585,22 @@ int rfs_init(const char * rootdir)
 {
 	AutoTimer _timer(__FUNCTION__);
 
-	int status = 0;
-
-	log_msg(LOG_LEVEL_DEBUG, "\nifs_init()\n");
-	
-	/*
-	 * Set current mount point info
-	 */
-	//ifs_setxattr("/", "fss_data_out", IFS_DATA->rootdir, PATH_MAX, 0);
-	
-
-	// Initialize the type map
-	status = rootmap_init(rootdir);
-	if (0 != status) {
-		log_msg(LOG_LEVEL_ERROR, "Failed to initialize rootmap\n");
-		return 1;
+	int mkdir_status = mkdir(rootdir, S_IRWXU);
+	log_msg(LOG_LEVEL_ERROR, "rfs_init creating %s\n", rootdir);
+	if (mkdir_status != 0 && errno != EEXIST) {
+		char errstr[1024];
+		log_msg(LOG_LEVEL_ERROR, "rfs_init failed to create %s, returned %d(%s)\n", rootdir, errno, strerror_r(errno, errstr, 1024));
+		return mkdir_status;
 	}
 
-	// Save the type string to be visible for users
-	//string type_str = rootmap_gettype_str();
-	//ifs_setxattr("/", "fss_typeval", type_str.c_str(), PATH_MAX, 0);
-
-	// Save the map string to be visible for users
-	//string map_str = rootmap_getmap_str();
-	//ifs_setxattr("/", "fss_rootmap", map_str.c_str(), PATH_MAX, 0);
-	
-	// Initialize the obj map
-	status = objmap_init();
-	if (0 != status) {
-		log_msg(LOG_LEVEL_ERROR, "Failed to initialize objmap\n");
-		return 1;
+	default_datadir = std::string(rootdir) + ("/data");
+	mkdir_status = mkdir(default_datadir.c_str(), S_IRWXU);
+	log_msg(LOG_LEVEL_ERROR, "rfs_init creating %s\n", default_datadir.c_str());
+	if (mkdir_status != 0 && errno != EEXIST) {
+		char errstr[1024];
+		log_msg(LOG_LEVEL_ERROR, "rfs_init failed to create %s, returned %d(%s)\n", default_datadir.c_str(), errno, strerror_r(errno, errstr, 1024));
+		return mkdir_status;
 	}
-	
-	// Initialize the post-processing db
-	status = postprocess_init();
-	if (0 != status) {
-		log_msg(LOG_LEVEL_ERROR, "Failed to initialize postprocess\n");
-		return 1;
-	}
-
-	// Initialize the stats db
-	status = stats_init();
-	if (0 != status) {
-		log_msg(LOG_LEVEL_ERROR, "Failed to initialize stats\n");
-		return 1;
-	}
-
-	// Initialize the post-process queue thread
-	ppd_thread_start();
 
 	return 0;
 }
@@ -1623,9 +1643,9 @@ int main(int argc, char *argv[])
 	// Pull the rootdir out of the argument list and save it in my
 	// internal data
 	snprintf(ifs_data->rootdir,  PATH_MAX, "%s", argv[argc-2]);
-	argv[argc-2] = argv[argc-1];
-	argv[argc-1] = NULL;
-	argc--;
+	//argv[argc-1] = argv[argc-2];
+	argv[argc-2] = "-obig_writes";
+	// argc--;
 
 	ifs_data->logfile = log_open(LOG_FILENAME);
 
@@ -1636,9 +1656,13 @@ int main(int argc, char *argv[])
 		log_msg(LOG_LEVEL_ERROR, "Failed to initialize routefs components\n");
 		return 1;
 	}
+	// snprintf(ifs_data->rootdir,  PATH_MAX, "%s", default_datadir.c_str());
 
 	// turn over control to fuse
 	fprintf(stderr, "about to call fuse_main\n");
+	for (int cnt = 0; cnt < argc; cnt++) {
+		printf("fuse_main args: %s\n", argv[cnt]);
+	}
 	fuse_stat = fuse_main(argc, argv, &ifs_oper, ifs_data);
 	fprintf(stderr, "fuse_main returned %d\n", fuse_stat);
 

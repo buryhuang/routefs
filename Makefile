@@ -4,7 +4,7 @@ FUSE_PKG_CFLAGS = `PKG_CONFIG_PATH=/usr/lib/x86_64-linux-gnu/pkgconfig/ pkg-conf
 FUSE_PKG_LIBS = `PKG_CONFIG_PATH=/usr/lib/x86_64-linux-gnu/pkgconfig/ pkg-config fuse --libs`
 
 #CFLAGS = -O0 -g ${FUSE_PKG_CFLAGS} -DCACHE_MODE
-CFLAGS = -O3 -g ${FUSE_PKG_CFLAGS}
+CFLAGS = -O0 -g ${FUSE_PKG_CFLAGS}
 LIBS = -lpthread -ldl -lrt leveldb/libleveldb.a ${FUSE_PKG_LIBS}
 OBJS = log.o store.o rootmap.o objmap.o postprocess.o ppd.o stats.o
 EXECUTABLES = routefs ppd ifsctl
