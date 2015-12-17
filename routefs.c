@@ -1231,6 +1231,7 @@ void *ifs_init(struct fuse_conn_info *conn)
 		log_msg(LOG_LEVEL_ERROR, "Failed to initialize rootmap\n");
 		return IFS_DATA;
 	}
+	log_msg(LOG_LEVEL_ERROR, "Initialized rootmap\n");
 
 	// Save the type string to be visible for users
 	//string type_str = rootmap_gettype_str();
@@ -1246,13 +1247,15 @@ void *ifs_init(struct fuse_conn_info *conn)
 		log_msg(LOG_LEVEL_ERROR, "Failed to initialize objmap\n");
 		return IFS_DATA;
 	}
-	
+	log_msg(LOG_LEVEL_ERROR, "Initialized objmap\n");
+
 	// Initialize the post-processing db
 	status = postprocess_init();
 	if (0 != status) {
 		log_msg(LOG_LEVEL_ERROR, "Failed to initialize postprocess\n");
 		return IFS_DATA;
 	}
+	log_msg(LOG_LEVEL_ERROR, "Initialized postprocess\n");
 
 	// Initialize the stats db
 	status = stats_init();
@@ -1260,11 +1263,14 @@ void *ifs_init(struct fuse_conn_info *conn)
 		log_msg(LOG_LEVEL_ERROR, "Failed to initialize stats\n");
 		return IFS_DATA;
 	}
+	log_msg(LOG_LEVEL_ERROR, "Initialized stats\n");
 
 	// Initialize the post-process queue thread
-	ppd_thread_start();
+	// ppd_thread_start();
+	// log_msg(LOG_LEVEL_ERROR, "Initialized ppd thread\n");
 
 	snprintf(IFS_DATA->rootdir,  PATH_MAX, "%s", default_datadir.c_str());
+	log_msg(LOG_LEVEL_ERROR, "Set real data dir\n");
 
 	return IFS_DATA;
 }
@@ -1644,7 +1650,7 @@ int main(int argc, char *argv[])
 	// internal data
 	snprintf(ifs_data->rootdir,  PATH_MAX, "%s", argv[argc-2]);
 	//argv[argc-1] = argv[argc-2];
-	argv[argc-2] = "-obig_writes";
+	argv[argc-2] = const_cast<char *>("-obig_writes");
 	// argc--;
 
 	ifs_data->logfile = log_open(LOG_FILENAME);
