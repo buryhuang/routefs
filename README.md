@@ -41,7 +41,7 @@ Cache layer is experimental but works in a certain degree. It uses a desinated f
 
 Unlimited Use Cases By Design
 -----
-With this simple flexible design, this routefs make efficient use cases possible.
+With this simple flexible design, this routefs makes efficient use cases possible.
 For example, for personal backup devices, it's as simple as:
 local SSD -> local hard drive -> Amazon S3.
 With the routefs, we don't need to bother change the code. Simply use a different config file.
