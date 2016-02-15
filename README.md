@@ -2,6 +2,22 @@ routefs
 ======
 routefs is a FUSE file system that routes files to and from different locations. Routefs is similar to the idea of union-fs, but with a much more flexible design by using flexible config file. It fits much better in caching and cloud solutions.
 
+Build and Installation
+======
+I tested using ubuntu 14.04. The following commands addes dependencies for building.
+```
+git clone https://github.com/buryhuang/routefs.git
+sudo apt-get install build-essential
+sudo apt-get install libfuse-dev
+sudo install pkg-config
+make
+```
+The resulted binariescan be used as below:
+```
+./routefs -h
+usage:  routefs [FUSE and mount options] rootDir mountPoint
+```
+
 Core Design
 ======
 The core design of routefs is to use a simple syntax to flexiblly configure where the data or files goes to. By this design, this simple routing layer does not need to be changed to adapt to various totally different personal or enterprise storage solutions.
