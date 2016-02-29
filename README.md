@@ -18,6 +18,33 @@ The resulted binariescan be used as below:
 usage:  routefs [FUSE and mount options] rootDir mountPoint
 ```
 
+Using with CIFS
+=====
+Add the following option to /etc/samba/smb.conf
+```
+/etc/samba/smb.conf
+[share]
+    comment = Ubuntu File Server Share
+    path = /mnt/rfs
+    browsable = yes
+    guest ok = yes
+    read only = no
+    create mask = 0755
+    force user = root
+```
+Add the allow_other option to /etc/fuse.conf
+```
+/etc/fuse.conf
+user_allow_other
+```
+
+In the routefs binary folder:
+```
+sudo mkdir /rfs_root
+sudo mkdir /mnt/rfs
+sudo ./routefs /rfs_root/ /mnt/rfs/
+```
+
 Core Design
 ======
 The core design of routefs is to use a simple syntax to flexiblly configure where the data or files goes to. By this design, this simple routing layer does not need to be changed to adapt to various totally different personal or enterprise storage solutions.
